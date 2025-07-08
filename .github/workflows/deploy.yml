@@ -14,18 +14,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 删除 version 参数避免冲突
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      # 使用 Node.js v20 (LTS) 确保与 pnpm 10.x 兼容
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20  # LTS 版本更稳定
-          cache: 'pnpm'     # 添加缓存加速构建
+          node-version: 20
 
-      # 安装依赖前先启用 corepack
       - name: Install Dependencies
         run: |
           corepack enable
@@ -34,16 +30,18 @@ jobs:
       - name: Build VuePress site
         run: pnpm run docs:build
 
-      # 使用原始部署方案，但添加错误处理选项
+      # 关键修复 - 添加发布根目录选项
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: gh-pages
           build_dir: docs/.vuepress/dist
-          # 增加以下选项避免常见部署错误
+          # 添加此选项确保部署内容位于根目录
+          destination_dir: .  # 确保部署在根目录而不是子目录
+          # 清除现有内容避免文件残留
           clean: true
           keep_history: false
-          # 添加 Jekyll 禁用配置防止文件被忽略
+          # 禁用 Jekyll 处理
           jekyll: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
