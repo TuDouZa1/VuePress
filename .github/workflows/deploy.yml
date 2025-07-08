@@ -6,50 +6,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-docs:
+  docs:
     runs-on: ubuntu-latest
-    
+
     steps:
-      # 1. 检出代码
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          # 获取所有提交历史（用于最后更新日期）
           fetch-depth: 0
 
-      # 2. 设置 pnpm（这是修复错误的关键步骤）
+      # 删除 version 参数避免冲突
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: '8'  # 明确指定 pnpm 版本确保稳定性
 
-      # 3. 设置 Node.js 环境（在设置 pnpm 之后）
+      # 使用 Node.js v20 (LTS) 确保与 pnpm 10.x 兼容
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"  # 使用稳定的 LTS 版本
-          cache: "pnpm"       # 启用 pnpm 依赖缓存
+          node-version: 20  # LTS 版本更稳定
+          cache: 'pnpm'     # 添加缓存加速构建
 
-      # 4. 安装依赖（显式添加 pnpm 到 PATH）
+      # 安装依赖前先启用 corepack
       - name: Install Dependencies
         run: |
           corepack enable
-          pnpm install --frozen-lockfile --prefer-offline
+          pnpm install --frozen-lockfile
 
-      # 5. 构建项目
-      - name: Build VuePress Site
+      - name: Build VuePress site
         run: pnpm run docs:build
 
-      # 6. 部署到 GitHub Pages（使用更稳定的部署方式）
+      # 使用原始部署方案，但添加错误处理选项
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: crazy-max/ghaction-github-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/.vuepress/dist
-          # 强制部署（即使没有变化也部署）
-          force_orphan: true
-          # 部署到 gh-pages 分支（会自动创建）
-          publish_branch: gh-pages
+          target_branch: gh-pages
+          build_dir: docs/.vuepress/dist
+          # 增加以下选项避免常见部署错误
+          clean: true
+          keep_history: false
+          # 添加 Jekyll 禁用配置防止文件被忽略
+          jekyll: false
         env:
-          # 添加环境变量确保部署过程稳定
-          TZ: UTC
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
