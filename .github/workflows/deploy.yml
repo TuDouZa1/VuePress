@@ -43,5 +43,6 @@ jobs:
           keep_history: false
           # 禁用 Jekyll 处理
           jekyll: false
+          custom_domain: "tudouza1.github.io/VuePress/"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

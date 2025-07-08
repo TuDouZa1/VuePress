@@ -14,7 +14,7 @@ import { defineUserConfig } from 'vuepress'
 import { plumeTheme } from 'vuepress-theme-plume'
 
 export default defineUserConfig({
-  base: '/',
+  base: '/VuePress/',
   lang: 'zh-CN',
   title: 'TuDouZai',
   description: '利用VuePress搭建的静态网站，用来记录一些文字',
