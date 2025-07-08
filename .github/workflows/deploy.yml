@@ -1,56 +1,51 @@
-name: deploy
+name: Deploy VuePress Documentation
 
 on:
-  # 每当 push 到 main 分支时触发部署
-  # Deployment is triggered whenever a push is made to the main branch.
   push:
     branches: [main]
-  # 手动触发部署
-  # Manually trigger deployment
   workflow_dispatch:
 
 jobs:
-  docs:
+  deploy-docs:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - uses: actions/checkout@v4
+      # 检出代码
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          # “最近更新时间” 等 git 日志相关信息，需要拉取全部提交记录
-          # "Last updated time" and other git log-related information require fetching all commit records.
+          # 获取所有提交历史（用于最后更新日期）
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
+      # 设置 Node.js 环境
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # 选择要使用的 node 版本
-          node-version: 22
+          node-version: "20"  # 使用稳定的LTS版本
+          cache: "pnpm"       # 自动缓存 pnpm 依赖
 
+      # 安装 pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "8"        # 指定 pnpm 版本确保稳定性
 
       # 安装依赖
-      # Install dependencies
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-
-      # 运行构建脚本
-      # Run the build script
-      - name: Build VuePress site
+      # 构建项目
+      - name: Build VuePress Site
         run: pnpm run docs:build
 
-
-      # 查看 workflow 的文档来获取更多信息
-      # @see https://github.com/crazy-max/ghaction-github-pages
+      # 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: crazy-max/ghaction-github-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          # 部署到 gh-pages 分支
-          target_branch: gh-pages
-          # 部署目录为 VuePress 的默认输出目录
-          build_dir: docs/.vuepress/dist
-        env:
-          # @see https://docs.github.com/cn/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # 构建输出目录（根据您项目的实际结构）
+          publish_dir: ./docs/.vuepress/dist
+          # 强制部署（即使没有变化也部署）
+          force_orphan: true
+          # 部署到 gh-pages 分支（会自动创建）
+          publish_branch: gh-pages
